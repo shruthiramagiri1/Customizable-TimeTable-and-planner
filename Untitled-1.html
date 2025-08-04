@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Timetable Planner</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --danger-color: #f72585;
+            --warning-color: #f8961e;
+            --info-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            overflow-x: auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        button, select, input {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #d11466;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #3ab4d9;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background-color: #e68a19;
+        }
+        
+        .timetable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .timetable th, .timetable td {
+            border: 1px solid #e0e0e0;
+            padding: 14px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .timetable th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            font-size: 1.05rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .timetable tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .timetable tr:hover {
+            background-color: #f1f3ff;
+        }
+        
+        .time-col {
+            background-color: var(--secondary-color);
+            color: white;
+            font-weight: bold;
+            width: 90px;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+        
+        .empty-slot {
+            background-color: #f8f9fa;
+            cursor: pointer;
+            min-height: 50px;
+        }
+        
+        .empty-slot:hover {
+            background-color: #e9f7fe;
+            transform: scale(1.02);
+            box-shadow: inset 0 0 0 2px var(--primary-color);
+        }
+        
+        .event {
+            background-color: var(--success-color);
+            color: white;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 3px 0;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .event:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .event::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background-color: rgba(255,255,255,0.3);
+        }
+        
+        .event-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 3px;
+        }
+        
+        .event-time {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        
+        .event-type {
+            font-size: 0.75rem;
+            background-color: rgba(0,0,0,0.1);
+            padding: 2px 5px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 3px;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 8% auto;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 550px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: slideDown 0.4s;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .close:hover {
+            color: var(--danger-color);
+            transform: rotate(90deg);
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .form-group input, 
+        .form-group select, 
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus, 
+        .form-group select:focus, 
+        .form-group textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+            outline: none;
+        }
+        
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .color-options {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border-color: var(--dark-color);
+            transform: scale(1.1);
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .timetable th, .timetable td {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+            
+            .time-col {
+                width: 70px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .control-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            button, select, input {
+                flex-grow: 1;
+                min-width: 120px;
+            }
+            
+            .timetable {
+                font-size: 0.85rem;
+            }
+            
+            .timetable th, .timetable td {
+                padding: 8px 5px;
+            }
+            
+            .event-title {
+                font-size: 0.85rem;
+            }
+            
+            .event-time {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .modal-content {
+                width: 95%;
+                margin: 15% auto;
+                padding: 20px 15px;
+            }
+            
+            .form-group input, 
+            .form-group select, 
+            .form-group textarea {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ultimate Timetable Planner</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <button id="addEventBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i> Add Event
+                </button>
+                <button id="clearAllBtn" class="btn-danger">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+                <button id="printTimetableBtn" class="btn-warning">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+            <div class="control-group">
+                <select id="weekSelector" class="custom-select">
+                    <option value="current">Current Week</option>
+                    <option value="next">Next Week</option>
+                    <option value="custom">Custom Week</option>
+                </select>
+                <button id="saveTimetableBtn" class="btn-success">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button id="loadTimetableBtn" class="btn-primary">
+                    <i class="fas fa-folder-open"></i> Load
+                </button>
+            </div>
+        </div>
+        
+        <div class="timetable-container" style="overflow-x: auto;">
+            <table class="timetable">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Monday</th>
+                        <th>Tuesday</th>
+                        <th>Wednesday</th>
+                        <th>Thursday</th>
+                        <th>Friday</th>
+                        <th>Saturday</th>
+                        <th>Sunday</th>
+                    </tr>
+                </thead>
+                <tbody id="timetableBody">
+                    <!-- Timetable will be generated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Add Event Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Add New Event</h2>
+            <form id="eventForm">
+                <input type="hidden" id="eventId">
+                <input type="hidden" id="eventDay">
+                <input type="hidden" id="eventTime">
+                
+                <div class="form-group">
+                    <label for="eventName">Event Name</label>
+                    <input type="text" id="eventName" placeholder="e.g., Math Class, Team Meeting" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventType">Event Type</label>
+                    <select id="eventType">
+                        <option value="class">Class/Lecture</option>
+                        <option value="meeting">Meeting</option>
+                        <option value="study">Study Session</option>
+                        <option value="work">Work</option>
+                        <option value="exercise">Exercise</option>
+                        <option value="appointment">Appointment</option>
+                        <option value="personal">Personal</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventLocation">Location</label>
+                    <input type="text" id="eventLocation" placeholder="e.g., Room 205, Zoom Meeting">
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" placeholder="Additional notes..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Color Theme</label>
+                    <div class="color-options">
+                        <div class="color-option selected" style="background-color: #4cc9f0;" data-color="#4cc9f0"></div>
+                        <div class="color-option" style="background-color: #4361ee;" data-color="#4361ee"></div>
+                        <div class="color-option" style="background-color: #7209b7;" data-color="#7209b7"></div>
+                        <div class="color-option" style="background-color: #f72585;" data-color="#f72585"></div>
+                        <div class="color-option" style="background-color: #f8961e;" data-color="#f8961e"></div>
+                        <div class="color-option" style="background-color: #4895ef;" data-color="#4895ef"></div>
+                        <div class="color-option" style="background-color: #3a0ca3;" data-color="#3a0ca3"></div>
+                        <div class="color-option" style="background-color: #2ec4b6;" data-color="#2ec4b6"></div>
+                    </div>
+                    <input type="hidden" id="eventColor" value="#4cc9f0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventDuration">Duration</label>
+                    <select id="eventDuration">
+                        <option value="30">30 minutes</option>
+                        <option value="60" selected>1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2 hours</option>
+                        <option value="180">3 hours</option>
+                        <option value="240">4 hours</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventRecurring">Recurrence</label>
+                    <select id="eventRecurring">
+                        <option value="none">Does not repeat</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-success" style="margin-right: 10px;">
+                        <i class="fas fa-check"></i> Save Event
+                    </button>
+                    <button type="button" id="deleteEventBtn" class="btn-danger" style="display: none;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generate timetable with detailed time slots
+            generateTimetable();
+            
+            // DOM Elements
+            const modal = document.getElementById('eventModal');
+            const addEventBtn = document.getElementById('addEventBtn');
+            const closeBtn = document.querySelector('.close');
+            const eventForm = document.getElementById('eventForm');
+            const deleteEventBtn = document.getElementById('deleteEventBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const saveTimetableBtn = document.getElementById('saveTimetableBtn');
+            const loadTimetableBtn = document.getElementById('loadTimetableBtn');
+            const printTimetableBtn = document.getElementById('printTimetableBtn');
+            
+            // Color options
+            const colorOptions = document.querySelectorAll('.color-option');
+            colorOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelector('.color-option.selected').classList.remove('selected');
+                    this.classList.add('selected');
+                    document.getElementById('eventColor').value = this.getAttribute('data-color');
+                });
+            });
+            
+            // Open modal for new event
+            addEventBtn.addEventListener('click', function() {
+                document.getElementById('modalTitle').textContent = 'Add New Event';
+                document.getElementById('eventId').value = '';
+                eventForm.reset();
+                document.getElementById('eventColor').value = '#4cc9f0';
+                document.querySelector('.color-option.selected').classList.remove('selected');
+                document.querySelector('.color-option[data-color="#4cc9f0"]').classList.add('selected');
+                document.getElementById('eventDuration').value = '60';
+                deleteEventBtn.style.display = 'none';
+                modal.style.display = 'block';
+            });
+            
+            // Close modal
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
+            // Handle form submission
+            eventForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveEvent();
+                modal.style.display = 'none';
+            });
+            
+            // Delete event
+            deleteEventBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this event?')) {
+                    const eventId = document.getElementById('eventId').value;
+                    const [day, time] = eventId.split('-');
+                    const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
+                    
+                    // Remove all events from this cell
+                    cell.innerHTML = '';
+                    cell.classList.add('empty-slot');
+                    cell.addEventListener('click', addEventToCell);
+                    
+                    // Remove from localStorage
+                    const events = JSON.parse(localStorage.getItem('timetableEvents') || {};
+                    delete events[eventId];
+                    localStorage.setItem('timetableEvents', JSON.stringify(events));
+                    
+                    modal.style.display = 'none';
+                }
+            });
+            
+            // Clear all events
+            clearAllBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear ALL events?')) {
+                    // Clear all event cells
+                    document.querySelectorAll('.event').forEach(event => {
+                        const cell = event.parentElement;
+                        cell.innerHTML = '';
+                        cell.classList.add('empty-slot');
+                        cell.addEventListener('click', addEventToCell);
+                    });
+                    
+                    // Clear localStorage
+                    localStorage.removeItem('timetableEvents');
+                    
+                    // Show confirmation
+                    alert('All events have been cleared!');
+                }
+            });
+            
+            // Save timetable
+            saveTimetableBtn.addEventListener('click', function() {
+                const events = JSON.parse(localStorage.getItem('timetableEvents') || '{}');
+                const dataStr = JSON.stringify(events);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportName = 'my_timetable_' + new Date().toISOString().slice(0, 10) + '.json';
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportName);
+                linkElement.click();
+                
+                // Show confirmation
+                alert('Timetable saved successfully!');
+            });
+            
+            // Load timetable
+            loadTimetableBtn.addEventListener('click', function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.readAsText(file, 'UTF-8');
+                    
+                    reader.onload = readerEvent => {
+                        const content = readerEvent.target.result;
+                        try {
+                            const events = JSON.parse(content);
+                            localStorage.setItem('timetableEvents', JSON.stringify(events));
+                            loadEvents();
+                            alert('Timetable loaded successfully!');
+                        } catch (error) {
+                            alert('Error loading file: ' + error.message);
+                        }
+                    };
+                };
+                
+                input.click();
+            });
+            
+            // Print timetable
+            printTimetableBtn.addEventListener('click', function() {
+                window.print();
+            });
+            
+            // Generate timetable function with detailed time slots
+            function generateTimetable() {
+                const timetableBody = document.getElementById('timetableBody');
+                timetableBody.innerHTML = '';
+                
+                // Create time slots from 6:00 AM to 11:30 PM in 30-minute increments
+                for (let hour = 6; hour <= 23; hour++) {
+                    for (let minute = 0; minute < 60; minute += 30) {
+                        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                        const displayHour = hour > 12 ? hour - 12 : hour;
+                        const displayTime = `${displayHour}:${minute.toString().padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
+                        
+                        const row = document.createElement('tr');
+                        
+                        // Time column
+                        const timeCell = document.createElement('td');
+                        timeCell.textContent = displayTime;
+                        timeCell.className = 'time-col';
+                        timeCell.setAttribute('data-time', timeString);
+                        row.appendChild(timeCell);
+                        
+                        // Day columns
+                        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                        days.forEach(day => {
+                            const cell = document.createElement('td');
+                            cell.setAttribute('data-day', day);
+                            cell.setAttribute('data-time', timeString);
+                            cell.classList.add('empty-slot');
+                            cell.addEventListener('click', addEventToCell);
+                            row.appendChild(cell);
+                        });
+                        
+                        timetableBody.appendChild(row);
+                    }
+                }
+                
+                // Load saved events
+                loadEvents();
+            }
+            
+            // Add event to cell
+            function addEventToCell() {
+                const day = this.getAttribute('data-day');
+                const time = this.getAttribute('data-time');
+                
+                document.getElementById('modalTitle').textContent = 'Add New Event';
+                document.getElementById('eventId').value = `${day}-${time}`;
+                document.getElementById('eventDay').value = day;
+                document.getElementById('eventTime').value = time;
+                eventForm.reset();
+                document.getElementById('eventColor').value = '#4cc9f0';
+                document.querySelector('.color-option.selected').classList.remove('selected');
+                document.querySelector('.color-option[data-color="#4cc9f0"]').classList.add('selected');
+                document.getElementById('eventDuration').value = '60';
+                deleteEventBtn.style.display = 'none';
+                modal.style.display = 'block';
+            }
+            
+            // Edit event
+            function editEvent(eventElement) {
+                const eventId = eventElement.getAttribute('data-event-id');
+                const eventData = JSON.parse(localStorage.getItem('timetableEvents'))[eventId];
+                
+                document.getElementById('modalTitle').textContent = 'Edit Event';
+                document.getElementById('eventId').value = eventId;
+                document.getElementById('eventDay').value = eventData.day;
+                document.getElementById('eventTime').value = eventData.time;
+                document.getElementById('eventName').value = eventData.name;
+                document.getElementById('eventType').value = eventData.type;
+                document.getElementById('eventLocation').value = eventData.location || '';
+                document.getElementById('eventDescription').value = eventData.description || '';
+                document.getElementById('eventColor').value = eventData.color;
+                document.getElementById('eventDuration').value = eventData.duration || '60';
+                document.getElementById('eventRecurring').value = eventData.recurring || 'none';
+                
+                // Set selected color
+                document.querySelector('.color-option.selected').classList.remove('selected');
+                document.querySelector(`.color-option[data-color="${eventData.color}"]`).classList.add('selected');
+                
+                deleteEventBtn.style.display = 'inline-block';
+                modal.style.display = 'block';
+            }
+            
+            // Save event
+            function saveEvent() {
+                const eventId = document.getElementById('eventId').value;
+                const eventName = document.getElementById('eventName').value;
+                const eventType = document.getElementById('eventType').value;
+                const eventLocation = document.getElementById('eventLocation').value;
+                const eventDescription = document.getElementById('eventDescription').value;
+                const eventColor = document.getElementById('eventColor').value;
+                const eventDuration = document.getElementById('eventDuration').value;
+                const eventRecurring = document.getElementById('eventRecurring').value;
+                const [day, time] = eventId.split('-');
+                
+                const eventData = {
+                    id: eventId,
+                    day,
+                    time,
+                    name: eventName,
+                    type: eventType,
+                    location: eventLocation,
+                    description: eventDescription,
+                    color: eventColor,
+                    duration: eventDuration,
+                    recurring: eventRecurring,
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Save to localStorage
+                const events = JSON.parse(localStorage.getItem('timetableEvents') || '{}');
+                events[eventId] = eventData;
+                localStorage.setItem('timetableEvents', JSON.stringify(events));
+                
+                // Update the timetable display
+                updateEventDisplay(eventData);
+                
+                // If recurring event, create future instances
+                if (eventRecurring !== 'none') {
+                    createRecurringEvents(eventData);
+                }
+            }
+            
+            // Update event display in timetable
+            function updateEventDisplay(eventData) {
+                const cell = document.querySelector(`td[data-day="${eventData.day}"][data-time="${eventData.time}"]`);
+                cell.innerHTML = '';
+                cell.classList.remove('empty-slot');
+                cell.removeEventListener('click', addEventToCell);
+                
+                const eventElement = document.createElement('div');
+                eventElement.className = 'event';
+                eventElement.style.backgroundColor = eventData.color;
+                eventElement.setAttribute('data-event-id', eventData.id);
+                
+                // Format time display
+                const [hour, minute] = eventData.time.split(':');
+                const displayHour = hour > 12 ? hour - 12 : hour;
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const displayTime = `${displayHour}:${minute} ${ampm}`;
+                
+                eventElement.innerHTML = `
+                    <div class="event-title">${eventData.name}</div>
+                    <div class="event-time">${displayTime}</div>
+                    <div class="event-type">${eventData.type}</div>
+                `;
+                
+                eventElement.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    editEvent(this);
+                });
+                
+                cell.appendChild(eventElement);
+            }
+            
+            // Create recurring events
+            function createRecurringEvents(originalEvent) {
+                const events = JSON.parse(localStorage.getItem('timetableEvents') || '{}');
+                const [day, time] = originalEvent.id.split('-');
+                const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                
+                if (originalEvent.recurring === 'daily') {
+                    // Create events for all days at the same time
+                    daysOfWeek.forEach(dayName => {
+                        if (dayName !== day) { // Skip the original day
+                            const newEventId = `${dayName}-${time}`;
+                            if (!events[newEventId]) { // Only create if doesn't exist
+                                const newEvent = {...originalEvent};
+                                newEvent.id = newEventId;
+                                newEvent.day = dayName;
+                                newEvent.isRecurringInstance = true;
+                                events[newEventId] = newEvent;
+                            }
+                        }
+                    });
+                }
+                else if (originalEvent.recurring === 'weekly') {
+                    // Find the same day next week
+                    const nextWeekDate = new Date();
+                    nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+                    const nextWeekDay = daysOfWeek[nextWeekDate.getDay() - 1] || 'sunday';
+                    const newEventId = `${nextWeekDay}-${time}`;
+                    
+                    if (!events[newEventId]) {
+                        const newEvent = {...originalEvent};
+                        newEvent.id = newEventId;
+                        newEvent.day = nextWeekDay;
+                        newEvent.isRecurringInstance = true;
+                        events[newEventId] = newEvent;
+                    }
+                }
+                
+                localStorage.setItem('timetableEvents', JSON.stringify(events));
+                loadEvents(); // Refresh display
+            }
+            
+            // Load events from localStorage
+            function loadEvents() {
+                const events = JSON.parse(localStorage.getItem('timetableEvents') || '{}');
+                
+                // First clear all events
+                document.querySelectorAll('.event').forEach(event => {
+                    event.parentElement.innerHTML = '';
+                    event.parentElement.classList.add('empty-slot');
+                    event.parentElement.addEventListener('click', addEventToCell);
+                });
+                
+                // Then load all events
+                for (const eventId in events) {
+                    const eventData = events[eventId];
+                    const cell = document.querySelector(`td[data-day="${eventData.day}"][data-time="${eventData.time}"]`);
+                    
+                    if (cell) {
+                        cell.innerHTML = '';
+                        cell.classList.remove('empty-slot');
+                        cell.removeEventListener('click', addEventToCell);
+                        
+                        const eventElement = document.createElement('div');
+                        eventElement.className = 'event';
+                        eventElement.style.backgroundColor = eventData.color;
+                        eventElement.setAttribute('data-event-id', eventId);
+                        
+                        // Format time display
+                        const [hour, minute] = eventData.time.split(':');
+                        const displayHour = hour > 12 ? hour - 12 : hour;
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const displayTime = `${displayHour}:${minute} ${ampm}`;
+                        
+                        eventElement.innerHTML = `
+                            <div class="event-title">${eventData.name}</div>
+                            <div class="event-time">${displayTime}</div>
+                            <div class="event-type">${eventData.type}</div>
+                        `;
+                        
+                        eventElement.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            editEvent(this);
+                        });
+                        
+                        cell.appendChild(eventElement);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
